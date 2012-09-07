@@ -75,17 +75,14 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
     private function _add_dropbox_status_to_form( $form ) {
 
       $status = $this->_get_dropbox_status( $USERINFO['name'] );
-      $status_adjective = substr( $status, 0, -1 );
-      $status_adjective_ucf = ucfirst( substr( $status, 0, -1 ) );
+      $status_action = ( $status == "disabled" ) ? "Disable" : "Enable";
 
       return str_replace(array(
         "{{status}}",
-        "{{status_adjective}}",
-        "{{status_adjective_ucf}}"
+        "{{status_action}}"
       ), array(
         $status,
-        $status_adjective,
-        $status_adjective_ucf
+        $status_action
       ), $form);
     }
 
