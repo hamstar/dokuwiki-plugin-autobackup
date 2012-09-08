@@ -72,6 +72,66 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
     }
 
     public function handle_tpl_act_unknown(Doku_Event &$event, $param) {
+
+      try {
+        switch ( $event->data ) {
+          case "restore.backup":
+            $this->_restore_backup();
+            break;
+          default:
+            return;
+            break;
+        }
+      } catch ( Exception $e ) {
+        echo $e->getMessage();
+      }
+    }
+
+    private function _restore_backup() {
+      
+      # save the zip file
+      $filename = $this->_clean_filename( $_FILES["restore-file"]["name"] );
+      $tmp_file = $_FILES["restore-file"]["tmp_name"];
+      $new_file = AUTOBACKUP_PLUGIN."restore/zipped/$filename";
+      move_uploaded_file($tmp_file, $new_file);
+
+      # determine the folder to unzip to and make it
+      $extract_to = AUTOBACKUP_PLUGIN."restore/unzipped/".substr( $filename, 0, -3 );
+      mkdir($extract_to);
+
+      # unzip the files
+      `unzip $new_file -b $extract_to 2>&1`; #TODO: inspect for errors here
+
+      if ( !file_exists("$extract_to/wiki.tar.gz") )
+        throw new Exception("Wiki data missing from the restore file");
+
+      # untar the wiki data
+      `tar -xzf $extract_to/wiki.tar.gz 2>&1`; #TODO: inspect for errors here
+
+      if ( !file_exists("$extract_to/data") )
+        throw new Exception("Wiki data did not extract from the archive");
+
+      # Remove Braincase system data
+      rmdir("$extract_to/data/pages/braincase");
+      rmdir("$extract_to/data/meta/braincase");
+
+      # copy the dokuwiki stuff across
+      $copy_cmd = "cp -Rf $extract_to/data ".DOKU_INC." 2>&1";
+      exec( $copy_cmd, $out, $ret);
+
+      if ( $ret != 0 )
+        echo implode( "\n", $out );
+
+      # notify restore cron to copy other data we don't have perms to
+      file_put_contents( $this->restore_queue, "$extract_to", FILE_APPEND )
+    }
+
+    private function _clean_filename( $name ) {
+
+      if ( substr( $name, -3) != "zip" )
+        throw new Exception("Restore file must be a zip archive.");
+
+      $name = stripslashes($name);
     }
 
     private function _add_backup_section( &$event ) {
