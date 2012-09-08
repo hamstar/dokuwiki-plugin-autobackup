@@ -48,12 +48,12 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
       switch ( $event->data ) {
         case "dropbox.enable":
-          echo json_encode(array("message" => "enabling..."));
-          #$this->_enable_dropbox( $USERINFO['name'] );
+          file_put_contents($this->dropbox_enable_queue, $USERINFO["name"], FILE_APPEND);
+          echo json_encode(array("message" => "Dropbox is queued to be enabled on your account.  You will receive an email soon with further instructions."));
           break;
         case "dropbox.disable":
-          echo json_encode(array("message" => "disabling..."));
-          #$this->_disable_dropbox( $USERINFO['name'] );
+          file_put_contents($this->dropbox_enable_queue, $USERINFO["name"], FILE_APPEND);
+          echo json_encode(array("message" => "Dropbox is queued to be disabled for your account."));
           break;
         default:
           return;
