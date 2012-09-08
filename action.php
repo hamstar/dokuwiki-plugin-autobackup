@@ -14,12 +14,22 @@ if (!defined('DOKU_TAB')) define('DOKU_TAB', "\t");
 if (!defined('DOKU_PLUGIN')) define('DOKU_PLUGIN',DOKU_INC.'lib/plugins/');
 if (!defined('AUTOBACKUP_PLUGIN')) define('AUTOBACKUP_PLUGIN', DOKU_PLUGIN.'autobackup/');
 
-define('ENABLED_USER_LIST',DOKU_INC.'data/dropbox/enabled_users.txt');
-define('ENABLE_USERS_QUEUE',DOKU_INC.'data/dropbox/enable_queue.txt');
-
 require_once DOKU_PLUGIN.'action.php';
 
 class action_plugin_autobackup extends DokuWiki_Action_Plugin {
+
+    private $dropbox_enabled_users;
+    private $dropbox_enable_queue;
+    private $dropbox_disable_queue;
+    private $restore_queue;
+
+    public function __construct() {
+
+      $this->dropbox_enabled_users = DOKU_INC.'data/braincase/dropbox/enabled_users.txt';
+      $this->dropbox_enable_queue = DOKU_INC.'data/braincase/dropbox/enable_queue.txt';
+      $this->dropbox_disable_queue = DOKU_INC.'data/braincase/dropbox/disable_queue.txt';
+      $this->restore_queue = DOKU_INC."data/pages/braincase/backup/restore_queue.txt";
+    }
 
     public function register(Doku_Event_Handler &$controller) {
 
@@ -90,10 +100,10 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
     private function _get_dropbox_status( $user ) {
 
-      if ( !file_exists(ENABLED_USER_LIST) )
+      if ( !file_exists($this->dropbox_enabled_users) )
         return "disabled";
       
-      $enabled_users = file_get_contents(ENABLED_USER_LIST);
+      $enabled_users = file_get_contents($this->dropbox_enabled_users);
 
       if ( preg_match("/^$user$/", $enabled_users ) )
         return "enabled";
