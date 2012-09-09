@@ -62,12 +62,10 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
       switch ( $event->data ) {
         case "dropbox.enable":
-          file_put_contents($this->dropbox_enable_queue, $USERINFO["name"], FILE_APPEND);
-          echo json_encode(array("message" => "Dropbox is queued to be enabled on your account.  You will receive an email soon with further instructions."));
+          $this->_enable_dropbox_for( $this->user );
           break;
         case "dropbox.disable":
-          file_put_contents($this->dropbox_enable_queue, $USERINFO["name"], FILE_APPEND);
-          echo json_encode(array("message" => "Dropbox is queued to be disabled for your account."));
+          $this->_disable_dropbox_for( $this->user );
           break;
         default:
           return;
@@ -75,6 +73,18 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
       }
 
       $this->preventDefault();
+    private function _enable_dropbox_for( $user ) {
+
+      # check that the user not already enabled, queued or waiting disable
+      file_put_contents($this->dropbox_enable_queue, "$user\n", FILE_APPEND);
+      echo json_encode(array("message" => "Dropbox is queued to be enabled on your account.  You will receive an email soon with further instructions."));      
+    }
+
+    private function _disable_dropbox_for( $user ) {
+
+      # TODO: check that the user is enabled/queued
+      file_put_contents($this->dropbox_enable_queue, "$user\n", FILE_APPEND);
+      echo json_encode(array("message" => "Dropbox is queued to be disabled for your account."));
     }
 
     public function handle_tpl_content_display(Doku_Event &$event, $param) {
