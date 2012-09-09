@@ -191,8 +191,13 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
       
       $enabled_users = file_get_contents($this->dropbox_enabled_users);
 
-      if ( preg_match("/^$user$/", $enabled_users ) )
+    private function _get_dropbox_status_for( $user ) {
+
+      if ( system( "grep \"$user\" {$this->dropbox_enabled_users}|wc -l" ) > 0 ) # user is enabled
         return "enabled";
+
+      if ( system( "grep \"$user\" {$this->dropbox_enable_queue}|wc -l" ) > 0 ) # user queued
+        return "queued";
 
       return "disabled";
     }
