@@ -6,6 +6,7 @@ jQuery(document).ready(function() {
 			{ call: 'dropbox.disable' },
 			function(j) {
 				alert(j.message);
+				location.reload();
 			},
 			'json'
 		);
@@ -17,6 +18,7 @@ jQuery(document).ready(function() {
 			{ call: 'dropbox.enable' },
 			function(j) {
 				alert(j.message);
+				location.reload();
 			},
 			'json'
 		);
