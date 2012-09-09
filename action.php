@@ -33,6 +33,15 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
       $this->dropbox_enable_queue = DOKU_DATA.'pages/braincase/dropbox/enable_queue.txt';
       $this->dropbox_disable_queue = DOKU_DATA.'pages/braincase/dropbox/disable_queue.txt';
       $this->restore_queue = DOKU_DATA."pages/braincase/backup/restore_queue.txt";
+
+      foreach ( array(
+          $this->dropbox_enabled_users,
+          $this->dropbox_enable_queue,
+          $this->dropbox_disable_queue,
+          $this->restore_queue
+        ) as $file )
+        if ( !file_exists( $file ) )
+          touch( $file );
     }
 
     public function register(Doku_Event_Handler &$controller) {
