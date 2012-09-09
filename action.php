@@ -176,24 +176,53 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
     private function _add_dropbox_status_to_form( $form ) {
 
-      $status_action = ( $status == "disabled" ) ? "Disable" : "Enable";
       $status = $this->_get_dropbox_status_for( $this->user );
+      $status_button = $this->_generate_dropbox_status_button( $status );
+      $status = ucfirst( $status );
 
       return str_replace(array(
         "{{status}}",
-        "{{status_action}}"
+        "{{status_button}}"
       ), array(
         $status,
-        $status_action
+        $status_button
       ), $form);
     }
 
-    private function _get_dropbox_status( $user ) {
+    private function _generate_dropbox_status_button( $status ) {
 
-      if ( !file_exists($this->dropbox_enabled_users) )
-        return "disabled";
+      $status_button = '<input type="submit" value="{{value}}" class="button" id="{{id}}"{{disabled}}/>';
+      $value = "???";
+      $disabled = "";
+      $id = "_dropbox";
+
+      switch ( $status ) {
+        case "disabled":
+          $value = "Enable Dropbox" ;
+          $id = "Enable$id";
+          break;
+        case "enabled":
+          $value = "Disable Dropbox";  
+          $id = "Disable$id";
+          break;
+        case "queued":
+          $value = "Queued";
+          $disabled = " disabled";
+          break;
+        default:
+          break;
+      }
       
-      $enabled_users = file_get_contents($this->dropbox_enabled_users);
+      return str_replace( array(
+        "{{value}}",
+        "{{id}}",
+        "{{disabled}}"
+      ), array(
+        $value,
+        $id,
+        $disabled
+      ), $status_button);
+    }
 
     private function _get_dropbox_status_for( $user ) {
 
