@@ -7,6 +7,9 @@
  */
 
 // must be run within Dokuwiki
+
+
+
 if (!defined('DOKU_INC')) die();
 
 if (!defined('DOKU_LF')) define('DOKU_LF', "\n");
@@ -117,8 +120,8 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
     private function _restore_backup() {
       
       # save the zip file
-      $filename = $this->_clean_filename( $_FILES["restore-file"]["name"] );
-      $tmp_file = $_FILES["restore-file"]["tmp_name"];
+      $filename = $this->_clean_filename( $_FILES["restore-zip"]["name"] );
+      $tmp_file = $_FILES["restore-zip"]["tmp_name"];
       $new_file = AUTOBACKUP_PLUGIN."restore/zipped/$filename";
       move_uploaded_file($tmp_file, $new_file);
 
@@ -150,7 +153,7 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
         echo implode( "\n", $out );
 
       # notify restore cron to copy other data we don't have perms to
-      file_put_contents( $this->restore_queue, "$extract_to", FILE_APPEND )
+      file_put_contents( $this->restore_queue, "$extract_to\n", FILE_APPEND );
     }
 
     private function _clean_filename( $name ) {
