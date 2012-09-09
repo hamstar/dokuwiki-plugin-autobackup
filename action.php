@@ -59,6 +59,9 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
     }
 
     public function handle_ajax_call_unknown(Doku_Event &$event, $param) {
+      
+      $event->preventDefault();
+      $event->stopPropagation();
 
       switch ( $event->data ) {
         case "dropbox.enable":
@@ -71,8 +74,8 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
           return;
           break;
       }
+    }
 
-      $this->preventDefault();
     private function _enable_dropbox_for( $user ) {
 
       # check that the user not already enabled, queued or waiting disable
