@@ -163,6 +163,10 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
     private function _add_backup_section( &$event ) {
 
+      if ( !is_string($this->user) || empty( $this->user ) ) {
+        $event->data .= "Could not show backup section, couldn't get username";
+        return;
+      }
 
       $form = file_get_contents(AUTOBACKUP_PLUGIN."form.html");
       $form = $this->_add_dropbox_status_to_form( $form );
