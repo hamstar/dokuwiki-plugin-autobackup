@@ -25,9 +25,12 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
     private $dropbox_enable_queue;
     private $dropbox_disable_queue;
     private $restore_queue;
+    private $user;
 
     public function __construct() {
 
+      $session = reset($_SESSION);
+      $this->user = $session["auth"]["user"];
 
       $this->dropbox_enabled_users = DOKU_DATA.'pages/braincase/dropbox/enabled_users.txt';
       $this->dropbox_enable_queue = DOKU_DATA.'pages/braincase/dropbox/enable_queue.txt';
@@ -56,8 +59,6 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
     }
 
     public function handle_ajax_call_unknown(Doku_Event &$event, $param) {
-
-      global $USERINFO;
 
       switch ( $event->data ) {
         case "dropbox.enable":
@@ -149,7 +150,6 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
     private function _add_backup_section( &$event ) {
 
-      global $USERINFO;
 
       $form = file_get_contents(AUTOBACKUP_PLUGIN."form.html");
       $form = $this->_add_dropbox_status_to_form( $form );
@@ -159,8 +159,8 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
     private function _add_dropbox_status_to_form( $form ) {
 
-      $status = $this->_get_dropbox_status( $USERINFO['name'] );
       $status_action = ( $status == "disabled" ) ? "Disable" : "Enable";
+      $status = $this->_get_dropbox_status_for( $this->user );
 
       return str_replace(array(
         "{{status}}",
