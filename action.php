@@ -32,9 +32,6 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
     public function __construct() {
 
-      $session = reset($_SESSION);
-      $this->user = $session["auth"]["user"];
-
       $this->dropbox_enabled_users = DOKU_DATA.'pages/braincase/dropbox/enabled_users.txt';
       $this->dropbox_enable_queue = DOKU_DATA.'pages/braincase/dropbox/enable_queue.txt';
       $this->dropbox_disable_queue = DOKU_DATA.'pages/braincase/dropbox/disable_queue.txt';
@@ -63,6 +60,8 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
     public function handle_ajax_call_unknown(Doku_Event &$event, $param) {
       
+      $this->set_user();
+
       $event->preventDefault();
       $event->stopPropagation();
 
@@ -77,6 +76,17 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
           return;
           break;
       }
+    }
+
+    function set_user() {
+
+      if ( !is_array( $_SESSION ) ) {
+        $this->user = "unknown";
+        return false;
+      }
+
+      $session = reset($_SESSION);
+      $this->user = $session["auth"]["user"];
     }
 
     private function _enable_dropbox_for( $user ) {
@@ -97,12 +107,16 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
       
       global $ACT;
 
+      $this->set_user();
+
       if ( $ACT == "profile" )
         $this->_add_backup_section( $event );
     }
 
     public function handle_tpl_act_unknown(Doku_Event &$event, $param) {
 
+      $this->set_user();
+      
       try {
         switch ( $event->data ) {
           case "restore.backup":
