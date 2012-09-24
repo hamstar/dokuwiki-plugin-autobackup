@@ -1,5 +1,5 @@
 
-<p>These are the memories (backups) known to your Braincase.  You can revert to a prior memory by selecting it and clicking Remember</p>
+<p style="margin-top: 10px;">These are the memories (backups) known to your Braincase.  You can revert to a prior memory by selecting it and clicking Remember.  Your current changes will not be lost.</p>
 
 <table>
 	<thead>
