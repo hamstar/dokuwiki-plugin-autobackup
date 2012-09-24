@@ -44,15 +44,31 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
           touch( $file );
     }
 
+    /**
+     * Register hooks from dokuwiki
+     */
     public function register(Doku_Event_Handler &$controller) {
 
-       $controller->register_hook('ACTION_ACT_PREPROCESS', 'FIXME', $this, 'handle_action_act_preprocess');
+       $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_action_act_preprocess');
        $controller->register_hook('TPL_CONTENT_DISPLAY', 'BEFORE', $this, 'handle_tpl_content_display');
        $controller->register_hook('TPL_ACT_UNKNOWN', 'BEFORE', $this, 'handle_tpl_act_unknown');
        $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'handle_ajax_call_unknown');   
     }
 
     public function handle_action_act_preprocess(Doku_Event &$event, $param) {
+
+      switch ( $event->data ) {
+          case "memories":
+            if ( $this->user ) {
+              send_redirect("/doku.php?do=login");
+              return;
+            }
+            $event->preventDefault();
+            break;
+          default:
+            return;
+            break;
+        }
     }
 
     public function handle_ajax_call_unknown(Doku_Event &$event, $param) {
@@ -86,6 +102,11 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
       
       try {
         switch ( $event->data ) {
+          case "memories":
+            echo "<h2>Memories</h2>";
+            $this->_show_backup_options();
+            $this->_show_memories();
+            $event->preventDefault();
             break;
           default:
             return;
@@ -107,19 +128,34 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
       $this->user = $session["auth"]["user"];
     }
 
-    private function _add_dropbox_status_to_form( $form ) {
+    /**
+     * Prints out the backup options
+     */
+    private function _show_backup_options() {
 
       $status = $this->_get_dropbox_status_for( $this->user );
       $status_button = $this->_generate_dropbox_status_button( $status );
       $status = ucfirst( $status );
 
-      return str_replace(array(
-        "{{status}}",
-        "{{status_button}}"
-      ), array(
-        $status,
-        $status_button
-      ), $form);
+      include AUTOBACKUP_PLUGIN."inc/backup_options.php"; # TODO: not this
+    }
+
+    private function _show_memories() {
+
+      $memory_list = "/home/{$this->user}/memories.list";
+
+      $backups = array();
+      
+      if ( file_exists($memory_list) )
+        $backups = json_decode( file_get_contents( $memory_list ) );
+
+      $current = new StdClass;
+      $current->date = "Current";
+      $current->source = "Dokuwiki";
+
+      array_unshift( $backups, $current );
+
+      include AUTOBACKUP_PLUGIN."inc/memories.php"; # TODO: not this
     }
 
     private function _generate_dropbox_status_button( $status ) {
