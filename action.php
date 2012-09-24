@@ -7,9 +7,6 @@
  */
 
 // must be run within Dokuwiki
-
-
-
 if (!defined('DOKU_INC')) die();
 
 if (!defined('DOKU_LF')) define('DOKU_LF', "\n");
@@ -67,14 +64,35 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
       switch ( $event->data ) {
         case "dropbox.enable":
-          $this->_enable_dropbox_for( $this->user );
+          $message = Dropbox::enable_for( $this->user );
           break;
         case "dropbox.disable":
-          $this->_disable_dropbox_for( $this->user );
+          $message = Dropbox::disable_for( $this->user );
           break;
         default:
-          return;
+          $message = "Unsupported request";
           break;
+      }
+
+      echo json_encode(array("message" => $message));
+    }
+
+    public function handle_tpl_content_display(Doku_Event &$event, $param) {
+    }
+
+    public function handle_tpl_act_unknown(Doku_Event &$event, $param) {
+
+      $this->set_user();
+      
+      try {
+        switch ( $event->data ) {
+            break;
+          default:
+            return;
+            break;
+        }
+      } catch ( Exception $e ) {
+        echo $e->getMessage();
       }
     }
 
@@ -87,108 +105,6 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
       $session = reset($_SESSION);
       $this->user = $session["auth"]["user"];
-    }
-
-    private function _enable_dropbox_for( $user ) {
-
-      # check that the user not already enabled, queued or waiting disable
-      file_put_contents($this->dropbox_enable_queue, "$user\n", FILE_APPEND);
-      echo json_encode(array("message" => "Dropbox is queued to be enabled on your account.  You will receive an email soon with further instructions."));      
-    }
-
-    private function _disable_dropbox_for( $user ) {
-
-      # TODO: check that the user is enabled/queued
-      file_put_contents($this->dropbox_enable_queue, "$user\n", FILE_APPEND);
-      echo json_encode(array("message" => "Dropbox is queued to be disabled for your account."));
-    }
-
-    public function handle_tpl_content_display(Doku_Event &$event, $param) {
-      
-      global $ACT;
-
-      $this->set_user();
-
-      if ( $ACT == "profile" )
-        $this->_add_backup_section( $event );
-    }
-
-    public function handle_tpl_act_unknown(Doku_Event &$event, $param) {
-
-      $this->set_user();
-      
-      try {
-        switch ( $event->data ) {
-          case "restore.backup":
-            $this->_restore_backup();
-            break;
-          default:
-            return;
-            break;
-        }
-      } catch ( Exception $e ) {
-        echo $e->getMessage();
-      }
-    }
-
-    private function _restore_backup() {
-      
-      # save the zip file
-      $filename = $this->_clean_filename( $_FILES["restore-zip"]["name"] );
-      $tmp_file = $_FILES["restore-zip"]["tmp_name"];
-      $new_file = AUTOBACKUP_PLUGIN."restore/zipped/$filename";
-      move_uploaded_file($tmp_file, $new_file);
-
-      # determine the folder to unzip to and make it
-      $extract_to = AUTOBACKUP_PLUGIN."restore/unzipped/".substr( $filename, 0, -3 );
-      mkdir($extract_to);
-
-      # unzip the files
-      `unzip $new_file -b $extract_to 2>&1`; #TODO: inspect for errors here
-
-      if ( !file_exists("$extract_to/wiki.tar.gz") )
-        throw new Exception("Wiki data missing from the restore file");
-
-      # untar the wiki data
-      `tar -xzf $extract_to/wiki.tar.gz 2>&1`; #TODO: inspect for errors here
-
-      if ( !file_exists("$extract_to/data") )
-        throw new Exception("Wiki data did not extract from the archive");
-
-      # Remove Braincase system data
-      rmdir("$extract_to/data/pages/braincase");
-      rmdir("$extract_to/data/meta/braincase");
-
-      # copy the dokuwiki stuff across
-      $copy_cmd = "cp -Rf $extract_to/data ".DOKU_INC." 2>&1";
-      exec( $copy_cmd, $out, $ret);
-
-      if ( $ret != 0 )
-        echo implode( "\n", $out );
-
-      # notify restore cron to copy other data we don't have perms to
-      file_put_contents( $this->restore_queue, "$extract_to\n", FILE_APPEND );
-    }
-
-    private function _clean_filename( $name ) {
-
-      if ( substr( $name, -3) != "zip" )
-        throw new Exception("Restore file must be a zip archive.");
-
-      $name = stripslashes($name);
-    }
-
-    private function _add_backup_section( &$event ) {
-
-      if ( !is_string($this->user) || empty( $this->user ) ) {
-        $event->data .= "Could not show backup section, couldn't get username";
-        return;
-      }
-
-      $form = file_get_contents(AUTOBACKUP_PLUGIN."form.html");
-      $form = $this->_add_dropbox_status_to_form( $form );
-
-      $event->data .= $form;
     }
 
     private function _add_dropbox_status_to_form( $form ) {
