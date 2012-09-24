@@ -41,10 +41,10 @@ class Dropbox {
 		$enabled_users = self::_build_filename( $conf["autobackup"]["dropbox_enabled_users"] );
 		$enable_queue = self::_build_filename( $conf["autobackup"]["dropbox_enable_queue"] );
 
-		if ( system( "grep '$user' $enabled_users | wc -l" ) > 0 ) # user is enabled
+		if ( `grep '$user' $enabled_users | wc -l` > 0 ) # user is enabled
         	return "enabled";
 
-		if ( system( "grep '$user' $enable_queue | wc -l" ) > 0 ) # user queued
+		if ( `grep '$user' $enable_queue | wc -l` > 0 ) # user queued
 			return "queued";
 
 		return "disabled";

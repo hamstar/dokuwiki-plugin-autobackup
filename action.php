@@ -18,31 +18,11 @@ if (!defined('DOKU_DATA')) define('DOKU_DATA', "/var/lib/dokuwiki/data/");
 if (!defined('AUTOBACKUP_PLUGIN')) define('AUTOBACKUP_PLUGIN', DOKU_PLUGIN.'autobackup/');
 
 require_once DOKU_PLUGIN.'action.php';
+require_once AUTOBACKUP_PLUGIN.'lib/Dropbox.php';
 
 class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
-    private $dropbox_enabled_users;
-    private $dropbox_enable_queue;
-    private $dropbox_disable_queue;
-    private $restore_queue;
     private $user;
-
-    public function __construct() {
-
-      $this->dropbox_enabled_users = DOKU_DATA.'pages/braincase/dropbox/enabled_users.txt';
-      $this->dropbox_enable_queue = DOKU_DATA.'pages/braincase/dropbox/enable_queue.txt';
-      $this->dropbox_disable_queue = DOKU_DATA.'pages/braincase/dropbox/disable_queue.txt';
-      $this->restore_queue = DOKU_DATA."pages/braincase/backup/restore_queue.txt";
-
-      foreach ( array(
-          $this->dropbox_enabled_users,
-          $this->dropbox_enable_queue,
-          $this->dropbox_disable_queue,
-          $this->restore_queue
-        ) as $file )
-        if ( !file_exists( $file ) )
-          touch( $file );
-    }
 
     /**
      * Register hooks from dokuwiki
@@ -59,7 +39,7 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
       switch ( $event->data ) {
           case "memories":
-            if ( $this->user ) {
+            if ( !is_array( $_SESSION ) ) {
               send_redirect("/doku.php?do=login");
               return;
             }
@@ -73,7 +53,7 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
     public function handle_ajax_call_unknown(Doku_Event &$event, $param) {
       
-      $this->set_user();
+      $this->_set_user();
 
       $event->preventDefault();
       $event->stopPropagation();
@@ -98,7 +78,7 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
     public function handle_tpl_act_unknown(Doku_Event &$event, $param) {
 
-      $this->set_user();
+      $this->_set_user();
       
       try {
         switch ( $event->data ) {
@@ -117,7 +97,7 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
       }
     }
 
-    function set_user() {
+    private function _set_user() {
 
       if ( !is_array( $_SESSION ) ) {
         $this->user = "unknown";
@@ -144,7 +124,7 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
       $memory_list = "/home/{$this->user}/memories.list";
 
       $backups = array();
-      
+
       if ( file_exists($memory_list) )
         $backups = json_decode( file_get_contents( $memory_list ) );
 
