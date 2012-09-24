@@ -34,6 +34,59 @@ class Dropbox {
 		  : "Something went wrong, please contact your deployment manager";
 	}
 
+	public static function status_for( $user ) {
+
+		global $conf;
+
+		$enabled_users = self::_build_filename( $conf["autobackup"]["dropbox_enabled_users"] );
+		$enable_queue = self::_build_filename( $conf["autobackup"]["dropbox_enable_queue"] );
+
+		if ( system( "grep '$user' $enabled_users | wc -l" ) > 0 ) # user is enabled
+        	return "enabled";
+
+		if ( system( "grep '$user' $enable_queue | wc -l" ) > 0 ) # user queued
+			return "queued";
+
+		return "disabled";
+	}
+
+	public static function generate_button( $user ) {
+
+		$status = self::status_for( $user );
+
+		$status_button = '<input type="submit" value="{{value}}" class="button" id="{{id}}"{{disabled}}/>';
+		$value = "???";
+		$disabled = "";
+		$id = "_dropbox";
+
+		switch ( $status ) {
+		case "disabled":
+			$value = "Enable Dropbox" ;
+			$id = "Enable$id";
+			break;
+		case "enabled":
+			$value = "Disable Dropbox";  
+			$id = "Disable$id";
+			break;
+		case "queued":
+			$value = "Queued";
+			$disabled = " disabled";
+			break;
+		default:
+			break;
+		}
+
+		return str_replace( array(
+			"{{value}}",
+			"{{id}}",
+			"{{disabled}}"
+		), array(
+			$value,
+			$id,
+			$disabled
+		), $status_button);
+	}
+
 	private static function _add_to_queue( $user, $q ) {
 		
 		$fn = self::_build_filename( $q );

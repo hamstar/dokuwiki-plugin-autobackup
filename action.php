@@ -133,9 +133,8 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
      */
     private function _show_backup_options() {
 
-      $status = $this->_get_dropbox_status_for( $this->user );
-      $status_button = $this->_generate_dropbox_status_button( $status );
-      $status = ucfirst( $status );
+      $dropbox_status = Dropbox::status_for( $this->user );
+      $dropbox_button = Dropbox::generate_button( $this->user );
 
       include AUTOBACKUP_PLUGIN."inc/backup_options.php"; # TODO: not this
     }
@@ -156,52 +155,6 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
       array_unshift( $backups, $current );
 
       include AUTOBACKUP_PLUGIN."inc/memories.php"; # TODO: not this
-    }
-
-    private function _generate_dropbox_status_button( $status ) {
-
-      $status_button = '<input type="submit" value="{{value}}" class="button" id="{{id}}"{{disabled}}/>';
-      $value = "???";
-      $disabled = "";
-      $id = "_dropbox";
-
-      switch ( $status ) {
-        case "disabled":
-          $value = "Enable Dropbox" ;
-          $id = "Enable$id";
-          break;
-        case "enabled":
-          $value = "Disable Dropbox";  
-          $id = "Disable$id";
-          break;
-        case "queued":
-          $value = "Queued";
-          $disabled = " disabled";
-          break;
-        default:
-          break;
-      }
-      
-      return str_replace( array(
-        "{{value}}",
-        "{{id}}",
-        "{{disabled}}"
-      ), array(
-        $value,
-        $id,
-        $disabled
-      ), $status_button);
-    }
-
-    private function _get_dropbox_status_for( $user ) {
-
-      if ( system( "grep \"$user\" {$this->dropbox_enabled_users}|wc -l" ) > 0 ) # user is enabled
-        return "enabled";
-
-      if ( system( "grep \"$user\" {$this->dropbox_enable_queue}|wc -l" ) > 0 ) # user queued
-        return "queued";
-
-      return "disabled";
     }
 }
 
