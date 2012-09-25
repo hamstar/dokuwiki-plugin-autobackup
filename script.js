@@ -3,7 +3,6 @@ var autobackup = {
 	init: function () {
 
 		this.hide_title();
-		this.add_memories_button();
 		this.activate_remember_button();
 		this.activate_disable_dropbox_button();
 		this.activate_enable_dropbox_button();
@@ -66,4 +65,6 @@ jQuery(document).ready(function () {
 	if ( location.href.match(/do=memories/) != null ) {
 		autobackup.init();
 	}
+
+	autobackup.add_memories_button();
 });
