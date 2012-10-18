@@ -6,7 +6,7 @@
 		<tr>
 			<th>Date</th>
 			<th>Source</th>
-			<th style="text-align: center;"><button id="apply-backup">Remember</button></th>
+			<th></th>
 		</tr>
 	</thead>
 	<tbody>
@@ -14,7 +14,7 @@
 		<tr>
 			<td><?php echo $b->date; ?></td>
 			<td><?php echo $b->source; ?></td>
-			<td style="text-align: center;"><input type="radio" name="backup-selection"/></td>
+			<td style="text-align: center;"><button class="apply-backup">Remember</button></td>
 		</tr>
 		<?php endforeach; ?>
 	</tbody>

@@ -14,6 +14,7 @@ if (!defined('DOKU_TAB')) define('DOKU_TAB', "\t");
 if (!defined('DOKU_PLUGIN')) define('DOKU_PLUGIN',DOKU_INC.'lib/plugins/');
 
 // Custom constants
+if (!defined('DOKU_PLUGIN_IMAGES')) define('DOKU_PLUGIN_IMAGES',DOKU_BASE.'lib/plugins/autobackup/images/');
 if (!defined('DOKU_DATA')) define('DOKU_DATA', "/var/lib/dokuwiki/data/");
 if (!defined('AUTOBACKUP_PLUGIN')) define('AUTOBACKUP_PLUGIN', DOKU_PLUGIN.'autobackup/');
 
@@ -45,6 +46,13 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
             }
             $event->preventDefault();
             break;
+          case "restore":
+            if ( !is_array( $_SESSION ) ) {
+              send_redirect("/doku.php?do=login");
+              return;
+            }
+            $event->preventDefault();
+            break;
           default:
             return;
             break;
@@ -58,25 +66,32 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
       $event->preventDefault();
       $event->stopPropagation();
 
+      $json = new StdClass;
+
       switch ( $event->data ) {
         case "dropbox.enable":
-          $message = Dropbox::enable_for( $this->user );
+          $json->message = Dropbox::enable_for( $this->user );
           break;
         case "dropbox.disable":
-          $message = Dropbox::disable_for( $this->user );
+          $json->message = Dropbox::disable_for( $this->user );
+          break;
+        case "restore.memory":
+          $json = $this->_restore_memory();
           break;
         default:
-          $message = "Unsupported request";
+          $json->message = "Unsupported request";
           break;
       }
 
-      echo json_encode(array("message" => $message));
+      echo json_encode($json);
     }
 
     public function handle_tpl_content_display(Doku_Event &$event, $param) {
     }
 
     public function handle_tpl_act_unknown(Doku_Event &$event, $param) {
+
+      global $INPUT;
 
       $this->_set_user();
       
@@ -86,6 +101,10 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
             echo "<h2>Memories</h2>";
             $this->_show_backup_options();
             $this->_show_memories();
+            $event->preventDefault();
+            break;
+          case "restore":
+            $this->_do_restore();
             $event->preventDefault();
             break;
           default:
@@ -135,6 +154,63 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
       array_unshift( $backups, $current );
 
       include AUTOBACKUP_PLUGIN."inc/memories.php"; # TODO: not this
+    }
+
+    private function _do_restore() {
+
+      $username = $this->user;
+
+      include AUTOBACKUP_PLUGIN."inc/restore.php"; # TODO: not this 
+    }
+
+    private function _restore_memory() {
+
+      $username = $this->user;
+      $source = $_POST['source'];
+      $timestamp = stripslashes(trim($_POST['timestamp']));
+      
+      // Try to extract and link the wiki
+      try {
+
+        // get current timestamp
+        $cmd = "braincase-wiki-switcher $username";
+        exec($cmd, $out, $ret);
+        $current_timestamp = trim($out[0]);
+
+        // Check if we need to do a restore
+        if ( $current_timestamp != $timestamp
+          && !file_exists("/home/$username/.dokuwiki/data.$timestamp") ) {
+          // Restore the backup requested
+          $cmd = "braincase-restore $username $source $timestamp dokuwiki";
+          exec($cmd, $out, $ret);
+          
+          if ( $ret != 0 ) {
+            $out = implode("\n", $out);
+            throw new Exception("Failed to restore the timestamp: \n$out");
+          }
+        }
+        
+        // Check if we need to do a switch
+        if ( $current_timestamp != $timestamp ) {
+          // Setup the dokuwiki links
+          $cmd = "braincase-wiki-switcher $username $timestamp";
+          exec($cmd, $out, $ret);
+
+          if ( $ret != 0 ) {
+            $out = implode("\n", $out);
+            throw new Exception("Failed to switch timestamps: \n$out");
+          }
+        }
+
+        sleep(5);
+        throw new Exception("failing by default for testing purposes");
+
+      } catch ( Exception $e ) {
+        $json->error = 1;
+        $json->error_output = $e->getMessage();
+      }
+
+      return $json;     
     }
 }
 

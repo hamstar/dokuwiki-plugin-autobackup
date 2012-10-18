@@ -24,9 +24,11 @@ var autobackup = {
 	},
 
 	activate_remember_button: function () {
-		jQuery("#apply-backup").click(function () {
-			var name = jQuery("input[name='backup-selection']:checked").parents('tr').text().trim().replace(/\s+/, ' ');
-			alert("TODO: apply the backup " + name);
+		jQuery(".apply-backup").click(function () {
+			tr = jQuery(this).parents('tr');
+			timestamp = tr.find('td:first').text();
+			source = tr.find('td:nth-child(2)').text();
+			location.href = "/doku.php?do=restore&source="+source+"&timestamp="+timestamp;
 		});
 	},
 
@@ -56,6 +58,33 @@ var autobackup = {
 				'json'
 			);
 		});
+	},
+
+	init_restore: function () {
+
+		timestamp = jQuery("#timestamp").text();
+		source = jQuery("#source").text();
+
+		jQuery.post(
+			DOKU_BASE + "lib/exe/ajax.php",
+			{ 
+				call: 'restore.memory', 
+				source: source, 
+				timestamp: timestamp
+			},
+			function (j) {
+
+				jQuery("#loading-gif-div").hide();
+
+				if ( j.error ) {
+					jQuery("#restore-result").text("failed!");
+					jQuery("#error-output").show().text(j.error_output);
+				} else {
+					jQuery("#restore-result").text("complete!");
+				}
+			},
+			'json'
+		);
 	}
 };
 
@@ -64,6 +93,10 @@ jQuery(document).ready(function () {
 	// Modify the page
 	if ( location.href.match(/do=memories/) != null ) {
 		autobackup.init();
+	}
+
+	if ( location.href.match(/do=restore/) != null ) {
+		autobackup.init_restore();
 	}
 
 	autobackup.add_memories_button();
