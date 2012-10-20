@@ -169,6 +169,8 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
       $source = $_POST['source'];
       $timestamp = stripslashes(trim($_POST['timestamp']));
       
+      $json = new StdClass;
+
       // Try to extract and link the wiki
       try {
 
@@ -180,13 +182,14 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
         // Check if we need to do a restore
         if ( $current_timestamp != $timestamp
           && !file_exists("/home/$username/.dokuwiki/data.$timestamp") ) {
+          
           // Restore the backup requested
           $cmd = "braincase-restore $username $source $timestamp dokuwiki";
           exec($cmd, $out, $ret);
           
           if ( $ret != 0 ) {
             $out = implode("\n", $out);
-            throw new Exception("Failed to restore the timestamp: \n$out");
+            throw new Exception("Failed to restore the timestamp.\n$ $cmd\n$out\nReturned $ret");
           }
         }
         
@@ -198,12 +201,12 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
           if ( $ret != 0 ) {
             $out = implode("\n", $out);
-            throw new Exception("Failed to switch timestamps: \n$out");
+            throw new Exception("Failed to switch timestamps.\n$ $cmd\n$out\nReturned $ret");
           }
         }
 
-        sleep(5);
-        throw new Exception("failing by default for testing purposes");
+        $json->error = 0;
+        $json->message = "Successfully restored the Dokuwiki contents from $timestamp";
 
       } catch ( Exception $e ) {
         $json->error = 1;

@@ -76,11 +76,13 @@ var autobackup = {
 
 				jQuery("#loading-gif-div").hide();
 
-				if ( j.error ) {
+				if ( j.error != 0 ) {
 					jQuery("#restore-result").text("failed!");
 					jQuery("#error-output").show().text(j.error_output);
 				} else {
 					jQuery("#restore-result").text("complete!");
+					jQuery("#restore-message span.message").text(j.message);
+					jQuery("#restore-message").show();
 				}
 			},
 			'json'
