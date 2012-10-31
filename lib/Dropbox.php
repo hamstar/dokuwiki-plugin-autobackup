@@ -8,46 +8,36 @@ class Dropbox {
 	
 	public static function enable_for( $user ) {
 
-		global $conf;
+		exec("braincase-dropbox queue $user", $nil, $enable_retval);
+		exec("braincase-dropbox status $user", $out, $status_retval);
+		
+		$status = trim($out[0]);
 
-		$saved = self::_add_to_queue( 
-			$user,
-			$conf["autobackup"]["dropbox_enable_queue"]
-		);
+		if ( $status == "queued" )
+			return true;
 
-		return ($saved) 
-		  ? "Dropbox is queued to be enabled on your account.  You will receive an email soon with further instructions."
-		  : "Something went wrong, please contact your deployment manager";
+		if ( $enable_retval != 0 )
+			return "Something went wrong trying to queue $user for Dropbox install";
+
+		if ( $status_retval != 0 )
+			return "Something went wrong trying to check the Dropbox status of $user";
+
+		return "An unknown error occured, the status of the user was $status";
 	}
 
 	public static function disable_for( $user ) {
 		
-		global $conf;
 
-		$saved = self::_add_to_queue( 
-			$user,
-			$conf["autobackup"]["dropbox_disable_queue"]
-		);
-
-		return ($saved)
-		  ? "Dropbox is queued to be disabled for your account."
-		  : "Something went wrong, please contact your deployment manager";
 	}
 
 	public static function status_for( $user ) {
 
-		global $conf;
+		exec("braincase-dropbox status $user", $out, $ret);
 
-		$enabled_users = self::_build_filename( $conf["autobackup"]["dropbox_enabled_users"] );
-		$enable_queue = self::_build_filename( $conf["autobackup"]["dropbox_enable_queue"] );
+		if ( $ret != 0 )
+			return "unknown";
 
-		if ( `grep '$user' $enabled_users | wc -l` > 0 ) # user is enabled
-        	return "enabled";
-
-		if ( `grep '$user' $enable_queue | wc -l` > 0 ) # user queued
-			return "queued";
-
-		return "disabled";
+		return trim($out[0]);
 	}
 
 	public static function generate_button( $user ) {
@@ -85,22 +75,5 @@ class Dropbox {
 			$id,
 			$disabled
 		), $status_button);
-	}
-
-	private static function _add_to_queue( $user, $q ) {
-		
-		$fn = self::_build_filename( $q );
-
-		if ( !file_exists( $fn ) )
-			return false;
-
-		return ( file_put_contents( $fn, "$user\n", FILE_APPEND ) !== FALSE )
-		  ? true
-		  : false;
-	}
-
-	private static function _build_filename( $page_id ) {
-
-		return DOKU_INC."data/pages/".str_replace( ":", "/", $page_id );
 	}
 }

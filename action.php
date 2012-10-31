@@ -70,7 +70,10 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
       switch ( $event->data ) {
         case "dropbox.enable":
-          $json->message = Dropbox::enable_for( $this->user );
+          $result = Dropbox::enable_for( $this->user );
+          $json->message = ( $result === true )
+            ? "You have been queued to have Dropbox installed on your account, you should get an email detailing the next steps within 10 minutes"
+            : "$result. Please contact your deployment manager";
           break;
         case "dropbox.disable":
           $json->message = Dropbox::disable_for( $this->user );
