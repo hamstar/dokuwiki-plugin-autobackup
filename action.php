@@ -39,6 +39,8 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
     public function handle_action_act_preprocess(Doku_Event &$event, $param) {
 
       $this->_set_user();
+      global $JSINFO;
+      $JSINFO['user'] = $this->user;
 
       switch ( $event->data ) {
           case "memories":

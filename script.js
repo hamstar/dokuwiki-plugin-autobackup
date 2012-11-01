@@ -101,5 +101,7 @@ jQuery(document).ready(function () {
 		autobackup.init_restore();
 	}
 
-	autobackup.add_memories_button();
+	if ( JSINFO.user != "unknown" ) {
+		autobackup.add_memories_button();
+	}
 });
