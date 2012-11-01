@@ -38,17 +38,23 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
     public function handle_action_act_preprocess(Doku_Event &$event, $param) {
 
+      $this->_set_user();
+
       switch ( $event->data ) {
           case "memories":
-            if ( !is_array( $_SESSION ) ) {
+            if ( $user == "unknown" ) {
               send_redirect("/doku.php?do=login");
+              $event->preventDefault();
+              $event->stopPropagation();
               return;
             }
             $event->preventDefault();
             break;
           case "restore":
-            if ( !is_array( $_SESSION ) ) {
+            if ( $user == "unknown" ) {
               send_redirect("/doku.php?do=login");
+              $event->preventDefault();
+              $event->stopPropagation();
               return;
             }
             $event->preventDefault();
@@ -121,13 +127,11 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
     private function _set_user() {
 
-      if ( !is_array( $_SESSION ) ) {
-        $this->user = "unknown";
-        return false;
-      }
-
-      $session = reset($_SESSION);
-      $this->user = $session["auth"]["user"];
+      global $INFO;
+      $user = trim($INFO['client']);
+      $this->user = filter_var( $user, FILTER_VALIDATE_IP ) 
+        ? "unknown" // set the user as unknown if client turns out to be an IP
+        : $user ;
     }
 
     /**
