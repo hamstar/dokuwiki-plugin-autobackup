@@ -44,7 +44,7 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
       switch ( $event->data ) {
           case "memories":
-            if ( $user == "unknown" ) {
+            if ( $this->user == "unknown" ) {
               send_redirect("/doku.php?do=login");
               $event->preventDefault();
               $event->stopPropagation();
@@ -53,7 +53,7 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
             $event->preventDefault();
             break;
           case "restore":
-            if ( $user == "unknown" ) {
+            if ( $this->user == "unknown" ) {
               send_redirect("/doku.php?do=login");
               $event->preventDefault();
               $event->stopPropagation();
