@@ -98,6 +98,7 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
     }
 
     public function handle_tpl_content_display(Doku_Event &$event, $param) {
+
     }
 
     public function handle_tpl_act_unknown(Doku_Event &$event, $param) {
@@ -129,11 +130,13 @@ class action_plugin_autobackup extends DokuWiki_Action_Plugin {
 
     private function _set_user() {
 
-      global $INFO;
-      $user = trim($INFO['client']);
-      $this->user = filter_var( $user, FILTER_VALIDATE_IP ) 
-        ? "unknown" // set the user as unknown if client turns out to be an IP
-        : $user ;
+      $session = reset( $_SESSION ); // gives the first element of the array
+      $user = $session["auth"]["user"];
+
+      if ( is_null( $user ) )
+        return $this->user = "unknown";
+
+      return $this->user = $user;
     }
 
     /**

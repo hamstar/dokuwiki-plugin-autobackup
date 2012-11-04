@@ -8,6 +8,9 @@ class Dropbox {
 	
 	public static function enable_for( $user ) {
 
+		if ( !is_string( $user ) )
+			return "Invalid username encountered while trying to enable the account";
+
 		exec("braincase-dropbox queue $user", $nil, $enable_retval);
 		exec("braincase-dropbox status $user", $out, $status_retval);
 		
@@ -17,7 +20,7 @@ class Dropbox {
 			return true;
 
 		if ( $enable_retval != 0 )
-			return "Something went wrong trying to queue $user for Dropbox install";
+			return "Something went wrong trying to queue \"$user\" for Dropbox install";
 
 		if ( $status_retval != 0 )
 			return "Something went wrong trying to check the Dropbox status of $user";
@@ -32,10 +35,10 @@ class Dropbox {
 
 	public static function status_for( $user ) {
 
-		exec("braincase-dropbox status $user", $out, $ret);
+		exec("braincase-dropbox status $user 2>&1", $out, $ret);
 
 		if ( $ret != 0 )
-			return "unknown";
+			return "error ".implode(" ", $out);
 
 		return trim($out[0]);
 	}
@@ -62,6 +65,9 @@ class Dropbox {
 			$value = "Queued";
 			$disabled = " disabled";
 			break;
+		case "emailed": # TODO: make the button resend the activation email
+			$value = "Pending"; 
+			$disabled = " disabled";
 		default:
 			break;
 		}
