@@ -2,7 +2,8 @@
 
 $timestamp = $_GET["timestamp"];
 $source = $_GET["source"];
-
+#Clears Cache
+$clear = exec("touch /etc/dokuwiki/local.php"); 
 ?>
 
 <h1>Remember</h1>
